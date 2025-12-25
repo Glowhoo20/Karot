@@ -34,20 +34,21 @@ class SpeechService {
         this.recognition.onstart = () => {
             this.isListening = true;
             if (this.onStatusChangeCallback) this.onStatusChangeCallback(true);
-            console.log("Ses tanıma başlatıldı. (tr-TR)");
+            console.log("Speech recognition started (TR)");
         };
 
         this.recognition.onend = () => {
-            console.log("Ses tanıma oturumu kapandı.");
-            // Eğer isListening true ise ve kullanıcı durdurmadıysa otomatik restart
+            console.log("Speech recognition session ended.");
             if (this.isListening) {
-                console.log("300ms içinde otomatik yeniden başlatılıyor...");
+                console.log("Auto-restarting in 300ms...");
                 setTimeout(() => {
                     if (this.isListening) {
                         try {
+                            // Mobilde dili her seferinde tekrar set etmek daha güvenli
+                            this.recognition.lang = this.lang;
                             this.recognition.start();
                         } catch (e) {
-                            console.error("Yeniden başlatma hatası:", e);
+                            console.error("Restart error:", e);
                         }
                     }
                 }, 300);
@@ -57,13 +58,11 @@ class SpeechService {
         };
 
         this.recognition.onerror = (event) => {
-            // 'no-speech' hatası sessizlikte normaldir ve onend ile restart edilir.
             if (event.error === 'no-speech') return;
-
-            console.error("Konuşma tanıma hatası: ", event.error);
+            console.error("Speech Error:", event.error);
             if (event.error === 'not-allowed') {
                 this.isListening = false;
-                alert("Mikrofon erişimine izin verilmedi. Lütfen adres çubuğundaki kilit ikonuna tıklayıp izni kontrol edin.");
+                alert("Mikrofon izni gerekli! Lütfen tarayıcı ayarlarından mikrofonu açın.");
                 if (this.onStatusChangeCallback) this.onStatusChangeCallback(false);
             }
         };
@@ -72,16 +71,23 @@ class SpeechService {
             let interimTranscript = '';
             let finalTranscript = '';
 
+            // Mobilde sonuçlar bazen toplu gelebilir, resultIndex üzerinden güvenli döngü
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
+                    finalTranscript += transcript;
                 } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    interimTranscript += transcript;
                 }
             }
 
+            console.log("Result received:", { final: finalTranscript, interim: interimTranscript });
+
             if (this.onResultCallback) {
-                this.onResultCallback(finalTranscript, interimTranscript);
+                // Callback'e boş olmayan veriyi gönder
+                if (finalTranscript || interimTranscript) {
+                    this.onResultCallback(finalTranscript, interimTranscript);
+                }
             }
         };
     }
