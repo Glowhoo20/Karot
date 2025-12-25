@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Karot | Yasaklı Kelime Oyunu</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -13,18 +14,15 @@
                 extend: {
                     colors: {
                         dark: '#050a15',
-                        card: '#111827',
                         accent: '#3b82f6',
-                        danger: '#ef4444',
-                        success: '#10b981'
-                    },
-                    fontFamily: { sans: ['Inter', 'system-ui'] }
+                        danger: '#ef4444'
+                    }
                 }
             }
         }
     </script>
-    <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -32,24 +30,25 @@
         }
 
         .glass {
-            background: rgba(17, 24, 39, 0.7);
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .tab-content {
             display: none;
+            height: 100%;
         }
 
         .tab-content.active {
             display: flex;
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.2s ease-out;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(5px);
             }
 
             to {
@@ -60,139 +59,140 @@
     </style>
 </head>
 
-<body class="bg-dark text-slate-100 min-h-[100dvh] flex flex-col overflow-hidden">
-    <!-- Flash Overlay -->
+<body class="bg-[#050a15] text-slate-100 min-h-[100dvh] flex flex-col overflow-hidden select-none">
+
+    <!-- Red Flash Animation Layer -->
     <div id="flash-overlay"
         class="fixed inset-0 bg-red-600 opacity-0 pointer-events-none z-[100] transition-opacity duration-150"></div>
 
-    <!-- Header -->
+    <!-- Top Header -->
     <header class="p-4 flex justify-between items-center glass sticky top-0 z-50">
         <div>
             <h1
-                class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+                class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic">
                 KAROT</h1>
         </div>
         <div class="flex flex-col items-end">
             <div id="mic-status" class="flex items-center space-x-2">
-                <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-600 rounded-full"></div>
-                <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-400">KAPALI</span>
+                <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-700 rounded-full"></div>
+                <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-500">KAPALI</span>
             </div>
-            <div class="w-20 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+            <div class="w-24 h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
                 <div id="volume-bar" class="h-full bg-blue-500 w-0 transition-all duration-75"></div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content (Tabs) -->
-    <main class="flex-1 relative overflow-hidden flex flex-col">
+    <!-- Main Views -->
+    <main class="flex-1 relative overflow-hidden">
 
-        <!-- Tab 1: Game Stream (Active by default) -->
-        <section id="tab-game" class="tab-content active flex-col h-full p-4 pb-24">
-            <div id="transcript-container"
-                class="flex-1 flex flex-col justify-end overflow-y-auto space-y-4 custom-scrollbar">
-                <div id="transcript-flow" class="flex flex-col space-y-3">
-                    <p class="text-slate-500 text-center italic text-sm">Oyun başlatılınca konuşmalar burada
-                        görünecek...</p>
+        <!-- Tab: Game (Live Stream) -->
+        <section id="tab-game" class="tab-content active flex-col p-4 pb-20">
+            <div id="transcript-container" class="flex-1 overflow-y-auto mb-4 flex flex-col pt-4">
+                <div id="transcript-flow" class="space-y-4">
+                    <p class="text-slate-600 text-center italic text-sm py-12">Başlat butonuna basın ve konuşmaya
+                        başlayın...</p>
                 </div>
             </div>
 
-            <!-- Controls Overlay -->
-            <div class="mt-4 flex justify-center">
+            <!-- Floating Start Button -->
+            <div class="absolute bottom-24 left-0 right-0 flex justify-center pointer-events-none">
                 <button id="start-btn"
-                    class="w-20 h-20 rounded-full bg-success flex items-center justify-center shadow-xl shadow-success/20 active:scale-95 transition-all outline-none">
-                    <svg id="play-icon" class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    class="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-2xl shadow-emerald-500/20 active:scale-90 transition-all pointer-events-auto">
+                    <svg id="play-icon" class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
                             clip-rule="evenodd"></path>
                     </svg>
-                    <svg id="stop-icon" class="w-8 h-8 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <svg id="stop-icon" class="w-10 h-10 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H8a1 1 0 01-1-1V8z"
                             clip-rule="evenodd"></path>
                     </svg>
                 </button>
             </div>
         </section>
 
-        <!-- Tab 2: Forbidden Words -->
-        <section id="tab-words" class="tab-content flex-col h-full p-6 pb-24 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-6 flex items-center"><span class="mr-3">🚫</span> Yasaklılar</h2>
-            <form id="word-form" class="flex mb-6 glass p-2 rounded-2xl">
-                <input type="text" id="word-input" placeholder="Kelime ekle..."
-                    class="bg-transparent border-none text-white w-full px-4 outline-none text-lg">
-                <button type="submit" class="bg-accent p-3 rounded-xl text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Tab: Forbidden Words -->
+        <section id="tab-words" class="tab-content flex-col p-6 pb-24 overflow-y-auto">
+            <h2 class="text-2xl font-black mb-6 italic">KELİMELER</h2>
+            <form id="word-form"
+                class="flex items-center space-x-2 bg-slate-900/50 p-2 rounded-2xl border border-slate-800 mb-6">
+                <input type="text" id="word-input" placeholder="Yasaklı kelime..."
+                    class="bg-transparent border-none text-white flex-1 px-4 outline-none text-lg">
+                <button type="submit"
+                    class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                    <svg class="w-6 h-6" fill="6" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                 </button>
             </form>
-            <div id="forbidden-words-list" class="grid grid-cols-2 gap-3">
-                <!-- Word cards -->
-            </div>
+            <div id="forbidden-words-list" class="grid grid-cols-2 gap-3"></div>
         </section>
 
-        <!-- Tab 3: Players & Scores -->
-        <section id="tab-players" class="tab-content flex-col h-full p-6 pb-24 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-6 flex items-center"><span class="mr-3">🏆</span> Skorlar</h2>
-            <form id="player-form" class="flex mb-8 glass p-2 rounded-2xl">
-                <input type="text" id="player-input" placeholder="Yeni oyuncu..."
-                    class="bg-transparent border-none text-white w-full px-4 outline-none text-lg">
-                <button type="submit" class="bg-indigo-600 p-3 rounded-xl text-white">
+        <!-- Tab: Players -->
+        <section id="tab-players" class="tab-content flex-col p-6 pb-24 overflow-y-auto">
+            <h2 class="text-2xl font-black mb-6 italic">SKORLAR</h2>
+            <form id="player-form"
+                class="flex items-center space-x-2 bg-slate-900/50 p-2 rounded-2xl border border-slate-800 mb-8">
+                <input type="text" id="player-input" placeholder="Oyuncu ismi..."
+                    class="bg-transparent border-none text-white flex-1 px-4 outline-none text-lg">
+                <button type="submit"
+                    class="bg-indigo-600 p-3 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                 </button>
             </form>
-            <div id="player-list" class="space-y-4">
-                <!-- Player cards -->
-            </div>
+            <div id="player-list" class="space-y-4"></div>
             <button id="reset-scores"
-                class="mt-8 text-slate-500 font-bold uppercase tracking-tighter text-sm w-full py-4 glass rounded-xl active:bg-red-900/20">Skorları
+                class="mt-12 text-slate-500 font-bold uppercase tracking-widest text-xs w-full py-4 border border-dashed border-slate-800 rounded-2xl active:bg-red-900/10">Skorları
                 Sıfırla</button>
         </section>
     </main>
 
-    <!-- Bottom Navigation -->
-    <nav
-        class="fixed bottom-0 left-0 right-0 glass h-20 flex justify-around items-center border-t border-slate-800 z-50">
-        <button onclick="switchTab('game')" class="nav-btn active flex flex-col items-center space-y-1 text-slate-400">
+    <!-- Bottom Navbar -->
+    <nav class="fixed bottom-0 left-0 right-0 h-20 glass flex justify-around items-center z-50 px-4">
+        <button onclick="switchTab('game', this)"
+            class="nav-btn active flex flex-col items-center space-y-1 text-blue-500">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z">
                 </path>
             </svg>
-            <span class="text-[10px] font-bold">OYUN</span>
+            <span class="text-[9px] font-black tracking-widest">DİNLE</span>
         </button>
-        <button onclick="switchTab('words')" class="nav-btn flex flex-col items-center space-y-1 text-slate-400">
+        <button onclick="switchTab('words', this)" class="nav-btn flex flex-col items-center space-y-1 text-slate-500">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
                 </path>
             </svg>
-            <span class="text-[10px] font-bold">KELİMELER</span>
+            <span class="text-[9px] font-black tracking-widest">YASAKLI</span>
         </button>
-        <button onclick="switchTab('players')" class="nav-btn flex flex-col items-center space-y-1 text-slate-400">
+        <button onclick="switchTab('players', this)"
+            class="nav-btn flex flex-col items-center space-y-1 text-slate-500">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
                 </path>
             </svg>
-            <span class="text-[10px] font-bold">OYUNCULAR</span>
+            <span class="text-[9px] font-black tracking-widest">SKORLAR</span>
         </button>
     </nav>
 
+    <!-- Scripts -->
     <script src="assets/js/speech.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
-        function switchTab(tabId) {
+        function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('text-accent', 'active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('text-blue-500'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.add('text-slate-500'));
 
-            const targetTab = document.getElementById('tab-' + tabId);
-            if (targetTab) targetTab.classList.add('active');
-
-            // Update button styles
-            event.currentTarget.classList.add('text-accent', 'active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.remove('text-slate-500');
+            btn.classList.add('text-blue-500');
         }
     </script>
 </body>
