@@ -118,45 +118,70 @@ document.addEventListener('DOMContentLoaded', () => {
         UI.micText.classList.toggle('text-blue-500', lis);
     });
 
-    let lastBeeped = '';
-    window.SpeechService.setOnResult((final, interim) => {
-        const text = final || interim;
+    const detectedWordsInCurrentSegment = new Set();
+
+    const appendToTranscript = (text, isInterim = false) => {
         if (!text) return;
 
-        // Visual highlight
+        // Vurgulama
         let html = text;
+        let isForbidden = false;
         state.words.forEach(w => {
-            const reg = new RegExp(`(${w})`, 'gi');
-            if (reg.test(text) && lastBeeped !== text) {
-                triggerAlert();
-                lastBeeped = text;
+            const reg = new RegExp(`(${w}[\\w]*)`, 'gi');
+            if (reg.test(text)) {
+                isForbidden = true;
+                html = html.replace(reg, '<span class="forbidden-hit">$1</span>');
             }
-            html = html.replace(reg, '<span class="forbidden-hit">$1</span>');
         });
 
-        if (final) {
-            const p = document.createElement('p');
-            p.className = 'transcript-new';
-            p.innerHTML = html;
-            // Manage history
-            if (UI.transcript.children.length > 0 && UI.transcript.querySelector('.interim')) {
-                UI.transcript.querySelector('.interim').remove();
-            }
-            UI.transcript.querySelectorAll('.transcript-new').forEach(el => el.classList.add('transcript-old'));
-            UI.transcript.appendChild(p);
-            lastBeeped = '';
-        } else {
+        if (isForbidden && !detectedWordsInCurrentSegment.has(text)) {
+            detectedWordsInCurrentSegment.add(text);
+            triggerAlert();
+        }
+
+        if (isInterim) {
             let intEl = UI.transcript.querySelector('.interim');
             if (!intEl) {
                 intEl = document.createElement('p');
-                intEl.className = 'interim text-accent italic p-4 opacity-70';
+                intEl.className = 'interim text-blue-400 italic p-3 opacity-80 animate-pulse';
                 UI.transcript.appendChild(intEl);
             }
             intEl.innerHTML = html + '...';
+        } else {
+            // Final mesaj geldiğinde geçiciyi temizle ve kalıcı yap
+            const intEl = UI.transcript.querySelector('.interim');
+            if (intEl) intEl.remove();
+
+            // İlk mesajı temizle
+            const firstMsg = UI.transcript.querySelector('.text-slate-600');
+            if (firstMsg) firstMsg.remove();
+
+            UI.transcript.querySelectorAll('.transcript-new').forEach(el => el.classList.replace('transcript-new', 'transcript-old'));
+
+            const p = document.createElement('p');
+            p.className = 'transcript-new';
+            p.innerHTML = html;
+            UI.transcript.appendChild(p);
+
+            // Sınırla
+            while (UI.transcript.children.length > 20) {
+                UI.transcript.removeChild(UI.transcript.firstChild);
+            }
         }
 
-        const container = UI.transcript.parentElement;
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        // Kaydır
+        setTimeout(() => {
+            const container = UI.transcript.parentElement;
+            container.scrollTop = container.scrollHeight;
+        }, 50);
+    };
+
+    window.SpeechService.setOnResult((final, interim) => {
+        if (interim) appendToTranscript(interim, true);
+        if (final) {
+            detectedWordsInCurrentSegment.clear();
+            appendToTranscript(final, false);
+        }
     });
 
     document.getElementById('word-form').onsubmit = (e) => {
