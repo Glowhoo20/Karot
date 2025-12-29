@@ -1,0 +1,19 @@
+/**
+ * config.js.example
+ * 
+ * Bu dosyayı config.js olarak kopyalayın ve API key'inizi ekleyin.
+ * config.js dosyası .gitignore'a eklenmelidir (güvenlik için).
+ * 
+ * Kullanım:
+ * 1. Bu dosyayı config.js olarak kopyalayın
+ * 2. GOOGLE_CLOUD_API_KEY değişkenine API key'inizi ekleyin
+ * 3. index.html'de config.js'i yükleyin
+ */
+
+const GOOGLE_CLOUD_API_KEY = 'YOUR_API_KEY_HERE';
+
+// API key'i global olarak kullanılabilir yap
+if (typeof window !== 'undefined') {
+    window.GOOGLE_CLOUD_API_KEY = GOOGLE_CLOUD_API_KEY;
+}
+

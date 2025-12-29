@@ -1,0 +1,19 @@
+{
+  "name": "karot",
+  "version": "2.0.0",
+  "description": "Yasaklı Kelime Oyunu - Google Cloud Speech-to-Text entegrasyonu ile",
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "dev:python": "python -m http.server 8000",
+    "dev:node": "npx http-server -p 8000 -c-1"
+  },
+  "keywords": [
+    "speech-recognition",
+    "game",
+    "google-cloud",
+    "speech-to-text"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

@@ -1,0 +1,19 @@
+/* assets/css/main.css */
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 0px;
+}
+
+/* Card Styling */
+.glass-card {
+    background: rgba(17, 24, 39, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+}
+
+.forbidden-hit {
+    color: #ef4444;
+    font-weight: 800;
+    text-decoration: underline;
+}
+
