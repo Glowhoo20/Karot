@@ -128,10 +128,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFinalizeTime = 0;
     const FINALIZE_DEBOUNCE_MS = 800; // 800ms içinde gelen metinleri birleştir
 
-    const checkForbidden = (text) => {
+    // Kelime sınırı regex'i oluştur (Türkçe karakterleri destekler)
+    const createWordBoundaryRegex = (word, flags = 'gi') => {
+        // Türkçe için kelime sınırı: boşluk, noktalama veya string başı/sonu
+        // \b Türkçe karakterlerle iyi çalışmadığı için manuel sınır kontrolü
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Kelime başında ve sonunda kelime olmayan karakterler veya string sınırları
+        return new RegExp(`(?:^|[\\s,.!?;:'"()\\[\\]{}])${escaped}(?=[\\s,.!?;:'"()\\[\\]{}]|$)`, flags);
+    };
+
+    // Kelimenin tam kelime olarak mevcut olup olmadığını kontrol et
+    const isWholeWord = (text, word) => {
         const lower = text.toLowerCase();
+        const wordLower = word.toLowerCase();
+
+        // String içindeki tüm olası konumları kontrol et
+        let index = 0;
+        while ((index = lower.indexOf(wordLower, index)) !== -1) {
+            const before = index === 0 ? ' ' : lower[index - 1];
+            const after = index + wordLower.length >= lower.length ? ' ' : lower[index + wordLower.length];
+
+            // Kelime sınırı karakterleri (boşluk, noktalama, sayı olmayan)
+            const boundaryChars = /[\s,.!?;:'"()\[\]{}\/\-]/;
+            const isWordBefore = before.match(boundaryChars) || index === 0;
+            const isWordAfter = after.match(boundaryChars) || (index + wordLower.length >= lower.length);
+
+            if (isWordBefore && isWordAfter) {
+                return true;
+            }
+            index++;
+        }
+        return false;
+    };
+
+    const checkForbidden = (text) => {
         for (const word of state.words) {
-            if (lower.includes(word) && !detectedInSession.has(word + ':' + text)) {
+            // Tam kelime eşleşmesi kontrolü
+            if (isWholeWord(text, word) && !detectedInSession.has(word + ':' + text)) {
                 detectedInSession.add(word + ':' + text);
                 triggerAlert(word);
 
@@ -155,8 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const highlightForbidden = (text) => {
         let html = text;
         state.words.forEach(w => {
-            const regex = new RegExp(`(${w})`, 'gi');
-            html = html.replace(regex, '<span class="text-red-500 font-bold bg-red-500/20 px-1 rounded">$1</span>');
+            // Tam kelime eşleşmesi için regex (Türkçe uyumlu)
+            // Kelime sınırlarını kontrol et
+            const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Lookahead ve lookbehind ile kelime sınırı
+            const regex = new RegExp(`(^|[\\s,.!?;:'"()\\[\\]{}])(${escaped})(?=[\\s,.!?;:'"()\\[\\]{}]|$)`, 'gi');
+            html = html.replace(regex, '$1<span class="text-red-500 font-bold bg-red-500/20 px-1 rounded">$2</span>');
         });
         return html;
     };
