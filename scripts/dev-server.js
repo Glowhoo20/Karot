@@ -33,7 +33,7 @@ async function checkPython() {
 function startPython() {
     const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
     console.log(`[Dev] Python HTTP server başlatılıyor (port ${PORT})...`);
-    
+
     const server = spawn(pythonCmd, ['-m', 'http.server', PORT.toString()], {
         stdio: 'inherit',
         shell: process.platform === 'win32'
@@ -54,7 +54,7 @@ function startPython() {
 // Start Node.js http-server
 function startNodeServer() {
     console.log(`[Dev] Node.js http-server başlatılıyor (port ${PORT})...`);
-    
+
     // Try to use local http-server first, then global
     const httpServer = spawn('npx', ['http-server', '-p', PORT.toString(), '-c-1'], {
         stdio: 'inherit',
@@ -79,9 +79,9 @@ function startNodeServer() {
 // Main
 (async () => {
     console.log('[Dev] Geliştirme sunucusu başlatılıyor...\n');
-    
+
     const hasPython = await checkPython();
-    
+
     if (hasPython) {
         startPython();
     } else {

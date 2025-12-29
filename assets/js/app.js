@@ -18,12 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn: document.getElementById('start-btn'),
         micPulse: document.getElementById('mic-pulse'),
         micText: document.getElementById('mic-text'),
-        volumeBar: document.getElementById('volume-bar'),
         flash: document.getElementById('flash-overlay'),
-        debugStatus: document.getElementById('debug-status'),
-        debugTimer: document.getElementById('debug-timer'),
         achievementsList: document.getElementById('achievements-list'),
-        leaderboardList: document.getElementById('leaderboard-list'),
         achievementProgress: document.getElementById('achievement-progress'),
         achievementTotal: document.getElementById('achievement-total'),
         statLevel: document.getElementById('stat-level'),
@@ -71,14 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
             UI.flash.style.opacity = '0.4';
             setTimeout(() => { UI.flash.style.opacity = '0'; }, 200);
         }
-        
+
         // Particle explosion at center
         if (window.Effects) {
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             window.Effects.createParticleExplosion(centerX, centerY, '#ef4444', 30);
         }
-        
+
         // Sound effect
         if (window.playSound) {
             window.playSound('error');
@@ -94,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             osc.start();
             osc.stop(beep.currentTime + 0.15);
         }
-        
+
         // Record forbidden hit
         if (window.GameManager) {
             window.GameManager.recordForbiddenHit();
@@ -113,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             save();
             render();
             triggerAlert();
-            
+
             // Add to leaderboard when game ends
             // This will be called manually by user, so we don't auto-add here
         }
@@ -131,21 +127,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lower.includes(word) && !detectedInSession.has(word + ':' + text)) {
                 detectedInSession.add(word + ':' + text);
                 triggerAlert(word);
-                
+
                 // Record word detection
                 if (window.GameManager) {
                     window.GameManager.recordWordDetected();
                 }
-                
+
                 return word;
             }
         }
-        
+
         // Record success (no forbidden word)
         if (text.trim() && window.GameManager) {
             window.GameManager.recordSuccess();
         }
-        
+
         return null;
     };
 
@@ -166,8 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const placeholder = UI.transcriptFlow.querySelector('.text-slate-600');
         if (placeholder) placeholder.remove();
 
-        // Check forbidden
-        checkForbidden(text);
+        // NOT: Bip sesi cümle bitiminde çalacak, burada sadece görsel highlight yapıyoruz
 
         // Create or update live line
         if (!currentLine) {
@@ -234,12 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.SpeechService.onInterim(showInterim);
     window.SpeechService.onFinal(finalizeLine);
 
-    let startTime = 0;
-    let timerInterval = null;
 
     window.SpeechService.onStatus((isActive) => {
         state.isPlaying = isActive;
-        
+
         // Update game manager
         if (window.GameManager) {
             if (isActive) {
@@ -259,70 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
         UI.micPulse.classList.toggle('mic-active', isActive);
         UI.micText.innerText = isActive ? 'OYUNDA' : 'KAPALI';
         UI.micText.classList.toggle('text-blue-500', isActive);
-
-        // Update service info
-        const serviceName = window.SpeechService.getCurrentService();
-        const serviceDisplay = serviceName === 'google-cloud' ? 'GOOGLE CLOUD' : 
-                              serviceName === 'web-speech' ? 'WEB SPEECH' : '-';
-        const serviceEl = document.getElementById('debug-service');
-        if (serviceEl) {
-            serviceEl.textContent = `SERVİS: ${serviceDisplay}`;
-            serviceEl.className = serviceName === 'google-cloud' ? 'text-yellow-400' : 
-                                  serviceName === 'web-speech' ? 'text-blue-400' : 'text-slate-500';
-        }
-
-        // Update usage info (Google Cloud)
-        const usageInfo = window.SpeechService.getUsageInfo();
-        const usageEl = document.getElementById('usage-info');
-        if (usageInfo && usageEl) {
-            usageEl.classList.remove('hidden');
-            document.getElementById('usage-minutes').textContent = `${usageInfo.minutes.toFixed(1)} dk`;
-            document.getElementById('usage-remaining').textContent = `Kalan: ${usageInfo.remaining} dk (ücretsiz)`;
-            
-            if (!usageInfo.isFree) {
-                document.getElementById('usage-remaining').textContent = 'ÜCRETLİ KULLANIM';
-                document.getElementById('usage-remaining').className = 'text-xs text-red-500';
-            }
-        } else if (usageEl) {
-            usageEl.classList.add('hidden');
-        }
-
-        // Debug
-        if (isActive) {
-            startTime = Date.now();
-            UI.debugStatus.innerText = "DURUM: DİNLİYOR";
-            UI.debugStatus.className = "text-green-500 font-bold";
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                UI.debugTimer.innerText = `SÜRE: ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
-                
-                // Update usage periodically
-                if (usageInfo) {
-                    const currentUsage = window.SpeechService.getUsageInfo();
-                    if (currentUsage) {
-                        document.getElementById('usage-minutes').textContent = `${currentUsage.minutes.toFixed(1)} dk`;
-                    }
-                }
-                
-                // Update game stats
-                if (window.GameManager) {
-                    updateGameStats();
-                }
-            }, 100);
-        } else {
-            clearInterval(timerInterval);
-            UI.debugStatus.innerText = "DURUM: DURDU";
-            UI.debugStatus.className = "text-red-500 font-bold";
-            
-            // Final usage update
-            if (usageInfo) {
-                const finalUsage = window.SpeechService.getUsageInfo();
-                if (finalUsage) {
-                    document.getElementById('usage-minutes').textContent = `${finalUsage.minutes.toFixed(1)} dk`;
-                    document.getElementById('usage-remaining').textContent = `Kalan: ${finalUsage.remaining} dk (ücretsiz)`;
-                }
-            }
-        }
     });
 
     // Start/Stop Button
@@ -371,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         save();
         render();
     };
-    
+
     // Clear Leaderboard
     const clearLeaderboardBtn = document.getElementById('clear-leaderboard');
     if (clearLeaderboardBtn) {
@@ -384,30 +313,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
-    
+
     // Update Game Stats
     function updateGameStats() {
         if (!window.GameManager) return;
-        
+
         const stats = window.GameManager.getStats();
-        
+
         if (UI.statLevel) UI.statLevel.textContent = stats.level;
         if (UI.statStreak) UI.statStreak.textContent = stats.currentStreak;
         if (UI.statAccuracy) UI.statAccuracy.textContent = stats.accuracy.toFixed(0) + '%';
         if (UI.statWords) UI.statWords.textContent = stats.totalWordsDetected;
     }
-    
+
     // Render Achievements
-    window.renderAchievements = function() {
+    window.renderAchievements = function () {
         if (!window.AchievementManager || !UI.achievementsList) return;
-        
+
         const achievements = window.AchievementManager.getAchievements();
         const unlocked = window.AchievementManager.getUnlockedCount();
         const total = window.AchievementManager.getTotalCount();
-        
+
         if (UI.achievementProgress) UI.achievementProgress.textContent = unlocked;
         if (UI.achievementTotal) UI.achievementTotal.textContent = total;
-        
+
         UI.achievementsList.innerHTML = achievements.map(ach => {
             const progress = Math.min((ach.progress / ach.target) * 100, 100);
             return `
@@ -428,81 +357,51 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
     };
-    
-    // Render Leaderboard
-    window.renderLeaderboard = function() {
-        if (!window.LeaderboardManager || !UI.leaderboardList) return;
-        
-        const entries = window.LeaderboardManager.getLeaderboard();
-        
-        if (entries.length === 0) {
-            UI.leaderboardList.innerHTML = '<p class="text-slate-600 text-center py-8">Henüz liderlik kaydı yok</p>';
-            return;
-        }
-        
-        UI.leaderboardList.innerHTML = entries.map((entry, index) => `
-            <div class="glass-card p-4 rounded-xl flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-black text-sm">
-                        ${index + 1}
-                    </div>
-                    <div>
-                        <div class="font-black">${entry.playerName}</div>
-                        <div class="text-xs text-slate-400">${entry.date}</div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-xl font-black text-red-500">${entry.score}</div>
-                    <div class="text-xs text-slate-500">Seviye ${entry.level} • %${entry.accuracy.toFixed(0)}</div>
-                </div>
-            </div>
-        `).join('');
-    };
-    
+
     // Achievement unlock handler
     window.addEventListener('achievementUnlocked', (e) => {
         const achievement = e.detail;
-        
+
         // Show toast
         if (window.showToast) {
             window.showToast(`🎉 ${achievement.name} başarımı açıldı!`, 'success', 4000);
         }
-        
+
         // Confetti effect
         if (window.Effects) {
             window.Effects.createConfetti(100);
         }
-        
+
         // Sound
         if (window.playSound) {
             window.playSound('levelup');
         }
-        
+
         // Re-render achievements
         renderAchievements();
     });
-    
+
     // Game stats update handler
     if (window.GameManager) {
         window.GameManager.onStateChange((stats) => {
             updateGameStats();
-            
+
             // Update achievements
             if (window.AchievementManager) {
                 window.AchievementManager.updateFromGameStats(stats);
             }
         });
-        
+
         window.GameManager.onLevelUp((level) => {
             // Level up effects
             if (window.Effects) {
                 window.Effects.createConfetti(50);
             }
-            
+
             if (window.showToast) {
                 window.showToast(`🎊 Seviye ${level}'e ulaştınız!`, 'success', 3000);
             }
-            
+
             if (window.playSound) {
                 window.playSound('levelup');
             }
@@ -512,6 +411,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Render
     render();
     renderAchievements();
-    renderLeaderboard();
     updateGameStats();
 });

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karot | Yasaklı Kelime Oyunu</title>
+    <title>CISS | Yasaklı Kelime Oyunu</title>
     <!-- Tailwind CSS -->
     <!-- Note: CDN is used for development. For production, use Tailwind CLI or PostCSS plugin -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -63,58 +63,24 @@
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥕</text></svg>">
 </head>
 
-<body class="bg-[#050a15] dark:bg-[#050a15] light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 min-h-[100dvh] flex flex-col overflow-hidden select-none">
+<body
+    class="bg-[#050a15] dark:bg-[#050a15] light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 min-h-[100dvh] flex flex-col overflow-hidden select-none">
 
     <!-- Red Flash Animation Layer -->
     <div id="flash-overlay"
         class="fixed inset-0 bg-red-600 opacity-0 pointer-events-none z-[100] transition-opacity duration-150"></div>
 
-    <!-- Debug Info -->
-    <div id="debug-info"
-        class="fixed top-20 left-4 z-[60] text-[10px] font-mono text-slate-500 pointer-events-auto opacity-70">
-        <div id="debug-status">DURUM: BEKLİYOR</div>
-        <div id="debug-timer">SÜRE: 0.0s</div>
-        <div id="debug-service" class="text-yellow-400">SERVİS: -</div>
-        
-        <!-- Usage Info (Google Cloud) -->
-        <div id="usage-info" class="mt-2 bg-slate-800/80 p-2 rounded-lg hidden">
-            <div class="text-slate-400 mb-1">📊 KULLANIM</div>
-            <div id="usage-minutes" class="text-green-400">0.0 dk</div>
-            <div id="usage-remaining" class="text-xs text-slate-500">Kalan: 60.0 dk</div>
-        </div>
-
-        <!-- Gain Control -->
-        <div class="mt-3 bg-slate-800/80 p-2 rounded-lg">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-slate-400">🔊 GAİN</span>
-                <span id="gain-value" class="text-blue-400 font-bold">1.0x</span>
-            </div>
-            <input type="range" id="gain-slider" min="1" max="5" step="0.5" value="1"
-                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                oninput="window.SpeechService.setGain(this.value); document.getElementById('gain-value').textContent = this.value + 'x'">
-        </div>
-
-        <button id="download-audio" onclick="if(window.SpeechService.downloadRecording) window.SpeechService.downloadRecording()"
-            class="mt-2 bg-slate-700 text-white px-2 py-1 rounded text-[9px] hover:bg-slate-600">
-            🎤 Sesi İndir
-        </button>
-    </div>
 
     <!-- Top Header -->
     <header class="p-4 flex justify-between items-center glass sticky top-0 z-50">
         <div>
             <h1
-                class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic">
-                KAROT</h1>
+                class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent italic">
+                CISS</h1>
         </div>
-        <div class="flex flex-col items-end">
-            <div id="mic-status" class="flex items-center space-x-2">
-                <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-700 rounded-full"></div>
-                <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-500">KAPALI</span>
-            </div>
-            <div class="w-24 h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                <div id="volume-bar" class="h-full bg-blue-500 w-0 transition-all duration-75"></div>
-            </div>
+        <div id="mic-status" class="flex items-center space-x-2">
+            <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-700 rounded-full"></div>
+            <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-500">KAPALI</span>
         </div>
     </header>
 
@@ -168,7 +134,7 @@
         <!-- Tab: Players -->
         <section id="tab-players" class="tab-content flex-col p-6 pb-24 overflow-y-auto">
             <h2 class="text-2xl font-black mb-6 italic">SKORLAR</h2>
-            
+
             <!-- Game Stats Card -->
             <div id="game-stats-card" class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-2 gap-4">
                 <div class="text-center">
@@ -188,7 +154,7 @@
                     <div id="stat-words" class="text-xl font-black text-purple-400">0</div>
                 </div>
             </div>
-            
+
             <form id="player-form"
                 class="flex items-center space-x-2 bg-slate-900/50 p-2 rounded-2xl border border-slate-800 mb-8">
                 <input type="text" id="player-input" placeholder="Oyuncu ismi..."
@@ -205,7 +171,7 @@
                 class="mt-12 text-slate-500 font-bold uppercase tracking-widest text-xs w-full py-4 border border-dashed border-slate-800 rounded-2xl active:bg-red-900/10">Skorları
                 Sıfırla</button>
         </section>
-        
+
         <!-- Tab: Achievements -->
         <section id="tab-achievements" class="tab-content flex-col p-6 pb-24 overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -216,15 +182,7 @@
             </div>
             <div id="achievements-list" class="grid grid-cols-2 gap-4"></div>
         </section>
-        
-        <!-- Tab: Leaderboard -->
-        <section id="tab-leaderboard" class="tab-content flex-col p-6 pb-24 overflow-y-auto">
-            <h2 class="text-2xl font-black mb-6 italic">LİDERLİK</h2>
-            <div id="leaderboard-list" class="space-y-3"></div>
-            <button id="clear-leaderboard"
-                class="mt-8 text-slate-500 font-bold uppercase tracking-widest text-xs w-full py-4 border border-dashed border-slate-800 rounded-2xl active:bg-red-900/10">Liderliği
-                Temizle</button>
-        </section>
+
     </main>
 
     <!-- Bottom Navbar -->
@@ -264,15 +222,7 @@
             </svg>
             <span class="text-[9px] font-black tracking-widest">ROZETLER</span>
         </button>
-        <button onclick="switchTab('leaderboard', this)"
-            class="nav-btn flex flex-col items-center space-y-1 text-slate-500">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                </path>
-            </svg>
-            <span class="text-[9px] font-black tracking-widest">LİDERLİK</span>
-        </button>
+
     </nav>
 
     <!-- Scripts -->
@@ -293,16 +243,16 @@
     <!-- API Key Configuration -->
     <!-- Load from config.js -->
     <script src="assets/js/config/config.js"></script>
-    
+
     <!-- Initialize API key -->
     <script>
         // Google Cloud API Key Configuration
         // API key config.js dosyasından yüklenir
         // Detaylar için API_KEY_SETUP.md dosyasına bakın
-        
+
         // Get API key from config.js (loaded above)
         const apiKey = window.GOOGLE_CLOUD_API_KEY || '';
-        
+
         // Initialize API key if provided
         if (apiKey && window.SpeechService && window.SpeechService.setApiKey) {
             window.SpeechService.setApiKey(apiKey);
@@ -325,12 +275,12 @@
             if (tab) {
                 tab.classList.add('active');
             }
-            
+
             if (btn) {
                 btn.classList.remove('text-slate-500');
                 btn.classList.add('text-blue-500');
             }
-            
+
             // Refresh data when switching tabs
             if (tabId === 'achievements' && window.renderAchievements) {
                 window.renderAchievements();
@@ -339,13 +289,13 @@
                 window.renderLeaderboard();
             }
         }
-        
+
         // Theme change handler
         window.addEventListener('themeChanged', (e) => {
             const theme = e.detail;
             const iconDark = document.getElementById('theme-icon-dark');
             const iconLight = document.getElementById('theme-icon-light');
-            
+
             if (theme === 'dark') {
                 if (iconDark) iconDark.classList.remove('hidden');
                 if (iconLight) iconLight.classList.add('hidden');
@@ -354,7 +304,7 @@
                 if (iconLight) iconLight.classList.remove('hidden');
             }
         });
-        
+
         // Note: renderAchievements and renderLeaderboard are defined in app.js
     </script>
 </body>
