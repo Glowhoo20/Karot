@@ -128,52 +128,117 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFinalizeTime = 0;
     const FINALIZE_DEBOUNCE_MS = 800; // 800ms içinde gelen metinleri birleştir
 
-    // Kelime sınırı regex'i oluştur (Türkçe karakterleri destekler)
-    const createWordBoundaryRegex = (word, flags = 'gi') => {
-        // Türkçe için kelime sınırı: boşluk, noktalama veya string başı/sonu
-        // \b Türkçe karakterlerle iyi çalışmadığı için manuel sınır kontrolü
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Kelime başında ve sonunda kelime olmayan karakterler veya string sınırları
-        return new RegExp(`(?:^|[\\s,.!?;:'"()\\[\\]{}])${escaped}(?=[\\s,.!?;:'"()\\[\\]{}]|$)`, flags);
-    };
+    // Türkçe Ek Sistemi - Kök + Ek kombinasyonlarını tespit eder
+    const TurkishSuffixSystem = {
+        // Türkçede kelime sonuna gelebilecek en yaygın ekler
+        suffixes: [
+            // Hal ekleri
+            "i", "ı", "u", "ü", "yi", "yı", "yu", "yü",  // Belirtme hali (-i)
+            "e", "a", "ye", "ya",                         // Yönelme hali (-e)
+            "de", "da", "te", "ta",                       // Bulunma hali (-de)
+            "den", "dan", "ten", "tan",                   // Ayrılma hali (-den)
+            "in", "ın", "un", "ün", "nin", "nın", "nun", "nün", // İyelik/Tamlayan (-in)
+            // Çoğul ekleri
+            "ler", "lar",
+            // İyelik ekleri
+            "im", "ım", "um", "üm",                       // 1. tekil
+            "in", "ın", "un", "ün",                       // 2. tekil
+            "i", "ı", "u", "ü", "si", "sı", "su", "sü",   // 3. tekil
+            "imiz", "ımız", "umuz", "ümüz",               // 1. çoğul
+            "iniz", "ınız", "unuz", "ünüz",               // 2. çoğul
+            "leri", "ları",                               // 3. çoğul
+            // Şahıs ekleri
+            "im", "sin", "siniz", "iz", "yim", "yız",
+            // Birliktelik/Vasıta
+            "le", "la", "yle", "yla",
+            // Yapım ekleri
+            "li", "lı", "lu", "lü",                       // -li
+            "siz", "sız", "suz", "süz",                   // -siz
+            "lik", "lık", "luk", "lük",                   // -lik
+            "ci", "cı", "cu", "cü", "çi", "çı", "çu", "çü", // -ci
+            // Fiil çekimleri
+            "di", "dı", "du", "dü", "ti", "tı", "tu", "tü", // Geçmiş zaman
+            "yor", "iyor", "ıyor", "uyor", "üyor",        // Şimdiki zaman
+            "ecek", "acak",                               // Gelecek zaman
+            "miş", "mış", "muş", "müş",                   // Duyulan geçmiş
+            "meli", "malı",                               // Gereklilik
+            "se", "sa",                                   // Dilek şart
+            // Kombinasyonlar (sık kullanılan)
+            "leri", "ları", "lerim", "larım",
+            "lerin", "ların", "lerden", "lardan",
+            "imden", "ından", "inden",
+            "ime", "ine", "ına",
+            "imle", "inle", "ınla"
+        ],
 
-    // Kelimenin tam kelime olarak mevcut olup olmadığını kontrol et
-    const isWholeWord = (text, word) => {
-        const lower = text.toLowerCase();
-        const wordLower = word.toLowerCase();
+        // Kelime yasaklı kök + Türkçe ek kombinasyonu mu kontrol et
+        isForbiddenWithSuffix: function (spokenWord, forbiddenRoot) {
+            const word = spokenWord.toLowerCase().trim();
+            const root = forbiddenRoot.toLowerCase().trim();
 
-        // String içindeki tüm olası konumları kontrol et
-        let index = 0;
-        while ((index = lower.indexOf(wordLower, index)) !== -1) {
-            const before = index === 0 ? ' ' : lower[index - 1];
-            const after = index + wordLower.length >= lower.length ? ' ' : lower[index + wordLower.length];
+            // 1. Tam eşleşme
+            if (word === root) return true;
 
-            // Kelime sınırı karakterleri (boşluk, noktalama, sayı olmayan)
-            const boundaryChars = /[\s,.!?;:'"()\[\]{}\/\-]/;
-            const isWordBefore = before.match(boundaryChars) || index === 0;
-            const isWordAfter = after.match(boundaryChars) || (index + wordLower.length >= lower.length);
+            // 2. Kök + Ek kontrolü - SADECE listede bulunan ekler kabul edilir
+            if (word.startsWith(root)) {
+                const suffix = word.slice(root.length);
 
-            if (isWordBefore && isWordAfter) {
-                return true;
-            }
-            index++;
-        }
-        return false;
-    };
+                // Ek yoksa (tam eşleşme zaten yukarıda kontrol edildi)
+                if (suffix === "") return true;
 
-    const checkForbidden = (text) => {
-        for (const word of state.words) {
-            // Tam kelime eşleşmesi kontrolü
-            if (isWholeWord(text, word) && !detectedInSession.has(word + ':' + text)) {
-                detectedInSession.add(word + ':' + text);
-                triggerAlert(word);
+                // Kalan kısım geçerli bir Türkçe ek mi? (SADECE listedekiler)
+                if (this.suffixes.includes(suffix)) return true;
 
-                // Record word detection
-                if (window.GameManager) {
-                    window.GameManager.recordWordDetected();
+                // Çoklu ek kontrolü - suffix birden fazla ekin kombinasyonu olabilir
+                // Örn: "seninkiler" = sen + in + ki + ler, burada "inkiler" tek ek değil
+                // Recursive olarak suffix'i parçala
+                for (const suf of this.suffixes) {
+                    if (suffix.startsWith(suf)) {
+                        const remaining = suffix.slice(suf.length);
+                        if (remaining === "" || this.suffixes.includes(remaining)) {
+                            return true;
+                        }
+                        // İkinci seviye kombinasyon
+                        for (const suf2 of this.suffixes) {
+                            if (remaining.startsWith(suf2)) {
+                                const remaining2 = remaining.slice(suf2.length);
+                                if (remaining2 === "" || this.suffixes.includes(remaining2)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
                 }
+            }
 
-                return word;
+            return false;
+        }
+    };
+
+    // Metindeki kelimeleri ayıkla
+    const extractWords = (text) => {
+        return text.toLowerCase().split(/[\s,.!?;:'"()\[\]{}\/\-]+/).filter(w => w.length > 0);
+    };
+
+    // Yasaklı kelime kontrolü (Türkçe ek sistemi ile)
+    const checkForbidden = (text) => {
+        const words = extractWords(text);
+
+        for (const spokenWord of words) {
+            for (const forbiddenRoot of state.words) {
+                if (TurkishSuffixSystem.isForbiddenWithSuffix(spokenWord, forbiddenRoot)) {
+                    const key = forbiddenRoot + ':' + spokenWord;
+                    if (!detectedInSession.has(key)) {
+                        detectedInSession.add(key);
+                        triggerAlert(forbiddenRoot);
+
+                        if (window.GameManager) {
+                            window.GameManager.recordWordDetected();
+                        }
+
+                        return forbiddenRoot;
+                    }
+                }
             }
         }
 
@@ -185,16 +250,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     };
 
+    // Yasaklı kelimeleri vurgula (Türkçe ek sistemi ile)
     const highlightForbidden = (text) => {
         let html = text;
-        state.words.forEach(w => {
-            // Tam kelime eşleşmesi için regex (Türkçe uyumlu)
-            // Kelime sınırlarını kontrol et
-            const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Lookahead ve lookbehind ile kelime sınırı
-            const regex = new RegExp(`(^|[\\s,.!?;:'"()\\[\\]{}])(${escaped})(?=[\\s,.!?;:'"()\\[\\]{}]|$)`, 'gi');
-            html = html.replace(regex, '$1<span class="text-red-500 font-bold bg-red-500/20 px-1 rounded">$2</span>');
-        });
+        const words = extractWords(text);
+
+        for (const forbiddenRoot of state.words) {
+            // Her yasaklı kök için regex oluştur
+            const escaped = forbiddenRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Kök + olası ekler için pattern
+            const pattern = new RegExp(
+                `(^|[\\s,.!?;:'"()\\[\\]{}])(${escaped}[a-zA-ZğüşıöçİĞÜŞÖÇ]*)(?=[\\s,.!?;:'"()\\[\\]{}]|$)`,
+                'gi'
+            );
+
+            html = html.replace(pattern, (match, before, word) => {
+                // Bu kelime gerçekten yasaklı mı kontrol et
+                if (TurkishSuffixSystem.isForbiddenWithSuffix(word, forbiddenRoot)) {
+                    return before + '<span class="text-red-500 font-bold bg-red-500/20 px-1 rounded">' + word + '</span>';
+                }
+                return match;
+            });
+        }
+
         return html;
     };
 
