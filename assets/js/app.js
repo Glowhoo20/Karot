@@ -121,6 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let interimTimer = null; // Timer for auto-finalization
     const detectedInSession = new Set();
 
+    // Mobile debounce için - kısa aralıklı finalize'ları birleştir
+    let pendingFinalText = '';
+    let finalizeDebounceTimer = null;
+    let lastFinalizedLine = null;
+    let lastFinalizeTime = 0;
+    const FINALIZE_DEBOUNCE_MS = 800; // 800ms içinde gelen metinleri birleştir
+
     const checkForbidden = (text) => {
         const lower = text.toLowerCase();
         for (const word of state.words) {
@@ -176,21 +183,48 @@ document.addEventListener('DOMContentLoaded', () => {
         // Scroll to bottom
         UI.transcriptFlow.parentElement.scrollTop = UI.transcriptFlow.parentElement.scrollHeight;
 
-        // Set auto-finalize timer (if no update for 1.2 seconds, finalize - daha hızlı yanıt için)
+        // Set auto-finalize timer (if no update for 1.5 seconds, finalize)
         interimTimer = setTimeout(() => {
             if (currentInterimText) {
-                console.log("[App] Auto-finalize:", currentInterimText);
                 finalizeLine(currentInterimText);
             }
-        }, 1200); // 2 saniyeden 1.2 saniyeye düşürüldü - daha hızlı görünüm
+        }, 1500);
+    };
+
+    // Metin birleştirme yardımcı fonksiyonu
+    const mergeTexts = (existing, newText) => {
+        if (!existing) return newText;
+        if (!newText) return existing;
+
+        const existingLower = existing.toLowerCase().trim();
+        const newLower = newText.toLowerCase().trim();
+
+        // Yeni metin eskileri içeriyorsa, yeniyi kullan
+        if (newLower.startsWith(existingLower)) {
+            return newText;
+        }
+
+        // Örtüşme kontrolü
+        const existingWords = existing.trim().split(/\s+/);
+        const newWords = newText.trim().split(/\s+/);
+
+        for (let overlap = Math.min(5, existingWords.length); overlap > 0; overlap--) {
+            const existingEnd = existingWords.slice(-overlap).join(' ').toLowerCase();
+            const newStart = newWords.slice(0, overlap).join(' ').toLowerCase();
+
+            if (existingEnd === newStart) {
+                return existing.trim() + ' ' + newWords.slice(overlap).join(' ');
+            }
+        }
+
+        // Örtüşme yok, basitçe birleştir
+        return existing.trim() + ' ' + newText.trim();
     };
 
     const finalizeLine = (text) => {
-        // Clear timer
+        // Clear timers
         clearTimeout(interimTimer);
-
-        // Check forbidden
-        checkForbidden(text);
+        clearTimeout(finalizeDebounceTimer);
 
         // Remove current interim line
         if (currentLine) {
@@ -199,13 +233,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         currentInterimText = '';
 
+        const now = Date.now();
+        const timeSinceLastFinalize = now - lastFinalizeTime;
+
+        // Eğer kısa süre önce bir satır oluşturulduysa, ona ekle (mobil için)
+        if (timeSinceLastFinalize < FINALIZE_DEBOUNCE_MS && lastFinalizedLine) {
+            // Mevcut satırın textContent'ini al ve yeni metinle birleştir
+            const existingP = lastFinalizedLine.querySelector('p');
+            if (existingP) {
+                const existingText = existingP.textContent || '';
+                const mergedText = mergeTexts(existingText, text);
+                existingP.innerHTML = highlightForbidden(mergedText);
+
+                // Check forbidden on merged text
+                checkForbidden(mergedText);
+
+                // Scroll to bottom
+                UI.transcriptFlow.parentElement.scrollTop = UI.transcriptFlow.parentElement.scrollHeight;
+
+                lastFinalizeTime = now;
+                return;
+            }
+        }
+
+        // Check forbidden
+        checkForbidden(text);
+
         // Remove placeholder if exists
         const placeholder = UI.transcriptFlow.querySelector('.text-slate-600');
         if (placeholder) placeholder.remove();
 
         // Create timestamp
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timeNow = new Date();
+        const timeStr = timeNow.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         // Create final line with timestamp
         const line = document.createElement('div');
@@ -215,6 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="text-white flex-1">${highlightForbidden(text)}</p>
         `;
         UI.transcriptFlow.appendChild(line);
+
+        // Son satırı kaydet (debounce için)
+        lastFinalizedLine = line;
+        lastFinalizeTime = now;
 
         // Limit history to 10 to keep centered
         while (UI.transcriptFlow.children.length > 10) {
