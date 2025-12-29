@@ -57,6 +57,8 @@
             }
         }
     </style>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥕</text></svg>">
 </head>
 
 <body class="bg-[#050a15] text-slate-100 min-h-[100dvh] flex flex-col overflow-hidden select-none">
@@ -64,6 +66,17 @@
     <!-- Red Flash Animation Layer -->
     <div id="flash-overlay"
         class="fixed inset-0 bg-red-600 opacity-0 pointer-events-none z-[100] transition-opacity duration-150"></div>
+
+    <!-- Debug Info -->
+    <div id="debug-info"
+        class="fixed top-20 left-4 z-[60] text-[10px] font-mono text-slate-500 pointer-events-auto opacity-70">
+        <div id="debug-status">DURUM: BEKLİYOR</div>
+        <div id="debug-timer">SÜRE: 0.0s</div>
+        <button id="download-audio" onclick="window.SpeechService.downloadRecording()"
+            class="mt-2 bg-slate-700 text-white px-2 py-1 rounded text-[9px] hover:bg-slate-600">
+            🎤 Sesi İndir
+        </button>
+    </div>
 
     <!-- Top Header -->
     <header class="p-4 flex justify-between items-center glass sticky top-0 z-50">
@@ -88,8 +101,8 @@
 
         <!-- Tab: Game (Live Stream) -->
         <section id="tab-game" class="tab-content active flex-col p-4 pb-20">
-            <div id="transcript-container" class="flex-1 overflow-y-auto mb-4 flex flex-col pt-4">
-                <div id="transcript-flow" class="space-y-4">
+            <div id="transcript-container" class="flex-1 overflow-y-auto mb-4 flex flex-col justify-center pt-4">
+                <div id="transcript-flow" class="space-y-3 max-w-lg mx-auto w-full">
                     <p class="text-slate-600 text-center italic text-sm py-12">Başlat butonuna basın ve konuşmaya
                         başlayın...</p>
                 </div>
