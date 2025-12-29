@@ -1,14 +1,82 @@
 /**
  * app.js - Modern Gamified Version
- * Core application logic for Karot game with achievements and leaderboard
+ * Core application logic for CISS game with achievements
  */
 document.addEventListener('DOMContentLoaded', () => {
     // State
     const state = {
         words: JSON.parse(localStorage.getItem('k_words')) || ['elma', 'şey', 'bu'],
         players: JSON.parse(localStorage.getItem('k_players')) || [],
-        isPlaying: false
+        isPlaying: false,
+        chatHistory: [] // Sohbet geçmişi
     };
+
+    // Sohbet Geçmişi Yönetimi
+    const ChatHistory = {
+        add: function (text, hasForbidden = false) {
+            const now = new Date();
+            const entry = {
+                time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                date: now.toLocaleDateString('tr-TR'),
+                text: text,
+                hasForbidden: hasForbidden
+            };
+            state.chatHistory.push(entry);
+        },
+
+        download: function () {
+            if (state.chatHistory.length === 0) {
+                alert('Henüz sohbet geçmişi yok!');
+                return;
+            }
+
+            // Metin dosyası oluştur
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('tr-TR').replace(/\./g, '-');
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }).replace(':', '-');
+
+            let content = `CISS - Sohbet Geçmişi\n`;
+            content += `İndirilme Tarihi: ${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}\n`;
+            content += `Toplam Mesaj: ${state.chatHistory.length}\n`;
+            content += `Yasaklı Kelimeler: ${state.words.join(', ')}\n`;
+            content += `${'='.repeat(50)}\n\n`;
+
+            state.chatHistory.forEach((entry, index) => {
+                const prefix = entry.hasForbidden ? '❌ ' : '✓ ';
+                content += `[${entry.time}] ${prefix}${entry.text}\n`;
+            });
+
+            content += `\n${'='.repeat(50)}\n`;
+            content += `CISS - Yasaklı Kelime Oyunu\n`;
+
+            // Dosya indir
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ciss-sohbet-${dateStr}_${timeStr}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
+        clear: function () {
+            state.chatHistory = [];
+        },
+
+        getCount: function () {
+            return state.chatHistory.length;
+        }
+    };
+
+    // İndirme butonu
+    const downloadBtn = document.getElementById('download-history-btn');
+    if (downloadBtn) {
+        downloadBtn.onclick = () => {
+            ChatHistory.download();
+        };
+    }
 
     // UI Elements
     const UI = {
@@ -361,7 +429,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 existingP.innerHTML = highlightForbidden(mergedText);
 
                 // Check forbidden on merged text
-                checkForbidden(mergedText);
+                const hasForbidden = checkForbidden(mergedText) !== null;
+
+                // Sohbet geçmişini güncelle (son kaydı güncelle)
+                if (state.chatHistory.length > 0) {
+                    state.chatHistory[state.chatHistory.length - 1].text = mergedText;
+                    state.chatHistory[state.chatHistory.length - 1].hasForbidden = hasForbidden;
+                }
 
                 // Scroll to bottom
                 UI.transcriptFlow.parentElement.scrollTop = UI.transcriptFlow.parentElement.scrollHeight;
@@ -372,7 +446,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Check forbidden
-        checkForbidden(text);
+        const hasForbidden = checkForbidden(text) !== null;
+
+        // Sohbet geçmişine ekle
+        ChatHistory.add(text, hasForbidden);
 
         // Remove placeholder if exists
         const placeholder = UI.transcriptFlow.querySelector('.text-slate-600');

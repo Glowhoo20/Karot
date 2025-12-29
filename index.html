@@ -78,9 +78,21 @@
                 class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent italic">
                 CISS</h1>
         </div>
-        <div id="mic-status" class="flex items-center space-x-2">
-            <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-700 rounded-full"></div>
-            <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-500">KAPALI</span>
+        <div class="flex items-center space-x-3">
+            <!-- Sohbet Geçmişi İndir Butonu -->
+            <button id="download-history-btn"
+                class="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700 transition-colors"
+                title="Sohbet Geçmişini İndir">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+            </button>
+            <!-- Mikrofon Durumu -->
+            <div id="mic-status" class="flex items-center space-x-2">
+                <div id="mic-pulse" class="w-2.5 h-2.5 bg-slate-700 rounded-full"></div>
+                <span id="mic-text" class="text-[10px] font-bold uppercase tracking-widest text-slate-500">KAPALI</span>
+            </div>
         </div>
     </header>
 
